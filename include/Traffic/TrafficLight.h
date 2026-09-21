@@ -1,31 +1,24 @@
 #ifndef TRAFFICLIGHT_H
 #define TRAFFICLIGHT_H
 
+#include <memory>
 #include <string>
+#include "TrafficLightState.h"
 
-// Phase 3: no State Pattern yet — kept intentionally simple with a
-// switch statement so the problem is visible before Phase 4 replaces
-// it with the State Pattern.
-enum class LightColor { RED, GREEN, YELLOW };
-
+// Phase 4: the old switch-based transition() is gone. TrafficLight
+// is now just a "context" object (State Pattern terminology) that
+// holds whatever state it's currently in and forwards to it.
 class TrafficLight {
 private:
     int id;
-    LightColor state;
-    double redDuration;
-    double greenDuration;
-    double yellowDuration;
-    double timer; // time remaining before the current state ends
+    std::unique_ptr<TrafficLightState> state;
 
 public:
-    TrafficLight(int _id, double _redDur, double _greenDur, double _yellowDur);
+    TrafficLight(int _id, double redDur, double greenDur, double yellowDur);
 
-    LightColor getState() const { return state; }
-    double getTimeRemaining() const { return timer; }
-
-    void update(double dt);      // advance by dt, same clock the vehicles use
-    void transition();           // move to the next state
+    void update(double dt);   // same public signature as Phase 3
     std::string getStateName() const;
+    double getTimeRemaining() const;
     void display() const;
 };
 
