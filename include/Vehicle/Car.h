@@ -1,7 +1,7 @@
 #ifndef CAR_H
 #define CAR_H
 
-#include "Vehicle.h"
+#include "Vehicle/Vehicle.h"
 
 class Car : public Vehicle {
 private:
@@ -13,7 +13,7 @@ public:
     double getFuel() const { return fuel; }
     void setFuel(double _f) { fuel = _f; }
 
-    void move(double dt) override;
+
     void display() const override;
     double getMaxSpeed() const override;
 };

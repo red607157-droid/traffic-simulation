@@ -1,7 +1,7 @@
 #ifndef BUS_H
 #define BUS_H
 
-#include "Vehicle.h"
+#include "Vehicle/Vehicle.h"
 
 class Bus : public Vehicle {
 private:
@@ -17,7 +17,7 @@ public:
     double getFuel() const { return fuel; }
     int getPassenger() const { return passenger; }
 
-    void move(double dt) override;
+
     void display() const override;
     double getMaxSpeed() const override;
 };

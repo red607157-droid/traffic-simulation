@@ -1,7 +1,7 @@
 #ifndef MOTORBIKE_H
 #define MOTORBIKE_H
 
-#include "Vehicle.h"
+#include "Vehicle/Vehicle.h"
 
 class Motorbike : public Vehicle {
 private:
@@ -17,7 +17,6 @@ public:
     void setFuel(double _f) { fuel = _f; }
     double getFuel() const { return fuel; }
 
-    void move(double dt) override;
     void display() const override;
     double getMaxSpeed() const override;
 };

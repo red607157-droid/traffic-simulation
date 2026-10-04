@@ -1,0 +1,9 @@
+#include <iostream>
+#include <memory>
+#include "Vehicle/States/Accelerating_State.h"
+#include "Vehicle/Vehicle.h"
+#include "Vehicle/States/Cruising_State.h"
+#include "Vehicle/States/Braking_State.h"
+#include "Vehicle/States/Stopped_State.h"
+#include "Vehicle/States/WaitingAtLight_State.h"
+#include <algorithm>

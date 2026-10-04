@@ -1,4 +1,4 @@
-#include "Bus.h"
+#include "Vehicle/Bus.h"
 #include <iostream>
 using namespace std;
 
@@ -14,13 +14,4 @@ void Bus::display() const {
          << "Max speed: " << getMaxSpeed() << "\n";
 }
 
-void Bus::move(double dt) {
-    if (dt < 0) { return; }
-    double fuelConsumed = 0.5 * dt;
-    setFuel(getFuel() - fuelConsumed);
-    if (getFuel() < 0) { cout << "Het xang roi cuh\n"; return; }
-    setSpeed(3 * dt + getSpeed());
-    if (getSpeed() > getMaxSpeed()) {
-        setSpeed(getMaxSpeed());
-    }
-}
+

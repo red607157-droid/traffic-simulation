@@ -2,7 +2,7 @@
 #include <vector>
 #include <memory>
 #include "Car.h"
-#include "Bus.h"
+#include "Vehicle/Bus.h"
 #include "Motorbike.h"
 #include "TrafficLight.h"
 
