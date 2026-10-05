@@ -1,7 +1,7 @@
 #ifndef REDSTATE_H
 #define REDSTATE_H
 
-#include "TrafficLightState.h"
+#include "Traffic/TrafficLightState.h"
 
 class RedState : public TrafficLightState {
 public:

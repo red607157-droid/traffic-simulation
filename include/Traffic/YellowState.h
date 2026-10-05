@@ -1,7 +1,7 @@
 #ifndef YELLOWSTATE_H
 #define YELLOWSTATE_H
 
-#include "TrafficLightState.h"
+#include "Traffic/TrafficLightState.h"
 
 class YellowState : public TrafficLightState {
 public:

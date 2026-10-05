@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <string>
-#include "TrafficLightState.h"
+#include "Traffic/TrafficLightState.h"
 
 // Phase 4: the old switch-based transition() is gone. TrafficLight
 // is now just a "context" object (State Pattern terminology) that

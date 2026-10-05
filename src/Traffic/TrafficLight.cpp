@@ -1,5 +1,5 @@
-#include "TrafficLight.h"
-#include "RedState.h"
+#include "Traffic/TrafficLight.h"
+#include "Traffic/RedState.h"
 #include <iostream>
 using namespace std;
 

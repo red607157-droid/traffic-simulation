@@ -5,13 +5,15 @@
 #include <memory>
 #include <string>
 
+
 class Vehicle {
+public: 
+    enum trafficLight{redLight, greenLight, yellowLight, unknownLight};
 protected:
     int id;
     double speed;              
     double position;  
     double targetSpeed; 
-    enum trafficLight{redLight, greenLight, yellowLight};
     trafficLight currentTrafficLight;
     std::unique_ptr<VehicleState> currentState;
 
