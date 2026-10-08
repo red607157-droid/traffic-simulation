@@ -5,11 +5,11 @@
 
 class Braking: public VehicleState{
     public:
-        void accelerate(Vehicle& vehicle);
-        void brake(Vehicle& vehicle);
-        void stop(Vehicle& vehicle);
+        void accelerate(Vehicle& vehicle) override;
+        void brake(Vehicle& vehicle) override;
+        void stop(Vehicle& vehicle) override;
 
-        void update(Vehicle& vehicle, double dt);
+        void update(Vehicle& vehicle, double dt) override;
         
         const char* getName() const override;
 };

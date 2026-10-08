@@ -5,16 +5,21 @@
 #include <memory>
 #include <string>
 
+class Lane; 
 
 class Vehicle {
 public: 
     enum trafficLight{redLight, greenLight, yellowLight, unknownLight};
+    double getDistanceToNextLight() const;
 protected:
     int id;
     double speed;              
     double position;  
     double targetSpeed; 
+    double safeDistance;
+    Vehicle* vehicleAhead;
     trafficLight currentTrafficLight;
+    Lane* currentLane;
     std::unique_ptr<VehicleState> currentState;
 
 public:
@@ -35,10 +40,18 @@ public:
     double getPosition() const;
     double getTargetSpeed() const;
     trafficLight getTrafficLight() const;
+    double getSafeDistance() const;
+    Vehicle* getVehicleAhead() const;
+    double getDistanceToVehicleAhead() const;
+    double getDynamicSafeDistance() const;
+    void setVehicleAhead(Vehicle* v);
     void setSpeed(double _s);
     void setPosition(double _p);
     void setTargetSpeed(double _ts);
     void setTrafficLight(trafficLight _tl);
+
+    void setCurrentLane(Lane* l);
+    double getDistanceToNextLight() const;
 
 
     virtual double getMaxSpeed() const = 0;

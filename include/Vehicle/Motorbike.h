@@ -9,16 +9,18 @@ private:
     double fuel;
 
 public:
-    Motorbike(int _i, double _s, int _e, double _f)
-        : Vehicle(_i, _s), engineCC(_e), fuel(_f) {}
+    Motorbike(int _i, double _s, int _e, double _f);
 
-    void setEngineCC(int _e) { engineCC = _e; }
-    int getEngineCC() const { return engineCC; }
-    void setFuel(double _f) { fuel = _f; }
-    double getFuel() const { return fuel; }
+    void setEngineCC(int _e);
+    int getEngineCC() const;
+    void setFuel(double _f);
+    double getFuel() const;
 
+    // Bắt buộc override các hàm ảo từ Vehicle
     void display() const override;
     double getMaxSpeed() const override;
+    double getAcceleration() const override;
+    double getDeceleration() const override;
 };
 
 #endif

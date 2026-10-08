@@ -9,7 +9,11 @@
 #include <algorithm>
 
 void Braking::accelerate(Vehicle& vehicle){
-    vehicle.setState(std::make_unique<Accelerating>());
+    if (vehicle.getDistanceToVehicleAhead() >= vehicle.getDynamicSafeDistance()) {
+        if (vehicle.getVehicleAhead() != nullptr || vehicle.getTrafficLight() == Vehicle::greenLight) {
+            vehicle.setState(std::make_unique<Accelerating>());
+        }
+    }
 }
 
 void Braking::brake(Vehicle& vehicle){
@@ -21,14 +25,33 @@ void Braking::stop(Vehicle& vehicle){
 }
 
 void Braking::update(Vehicle& vehicle, double dt){
+   // kiểm tra có thể tăng tốc lại không (đường thoáng + đèn xanh hoặc chỉ cần theo xe trước)
+    if (vehicle.getDistanceToVehicleAhead() >= vehicle.getDynamicSafeDistance()) {
+        if (vehicle.getVehicleAhead() != nullptr || vehicle.getTrafficLight() == Vehicle::greenLight) {
+            vehicle.setState(std::make_unique<Accelerating>());
+            return;
+        }
+    }
+
+    // tính toán vận tốc giảm dần
     double newSpeed = vehicle.getSpeed() - vehicle.getDeceleration() * dt;
     newSpeed = std::max(newSpeed, 0.0);
 
     vehicle.setSpeed(newSpeed);
     vehicle.setPosition(vehicle.getPosition() + newSpeed * dt);
-    if(newSpeed <= 0.0){
+
+    // khi xe đã dừng hẳn ở tốc độ 0
+    if (newSpeed <= 0.0) {
         vehicle.setSpeed(0.0);
-        vehicle.setState(std::make_unique<Stopped>());
+        
+        // phân loại lý do dừng: do đèn (xe đầu) hay do xe phía trước (xe sau)
+        if (vehicle.getVehicleAhead() == nullptr && 
+           (vehicle.getTrafficLight() == Vehicle::redLight || vehicle.getTrafficLight() == Vehicle::yellowLight)) {
+            vehicle.setState(std::make_unique<WaitingAtLight>());
+        } else {
+            vehicle.setState(std::make_unique<Stopped>());
+        }
+        return;
     }
 }
 const char* Braking::getName() const { return "Braking";} 

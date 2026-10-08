@@ -8,9 +8,11 @@
 #include "Vehicle/States/WaitingAtLight_State.h"
 #include <algorithm>
 
-void Accelerating::accelerate(Vehicle& vehicle){
-    if( vehicle.getSpeed() >= vehicle.getMaxSpeed()) {
-        std::cout<<"Da dat toc do toi da!"<<"\n";
+void Accelerating::accelerate(Vehicle& vehicle) {
+    double speedLimit = std::min(vehicle.getTargetSpeed(), vehicle.getMaxSpeed());
+    
+    if (vehicle.getSpeed() >= speedLimit) {
+        std::cout << "Da dat toc do muc tieu hoac toi da!\n";
         vehicle.setState(std::make_unique<Cruising>());
     }
 }
@@ -24,15 +26,41 @@ void Accelerating::stop(Vehicle& vehicle) {
 }
 
 void Accelerating::update(Vehicle& vehicle, double dt) {
+   // rà quét biến cố bằng khoảng cách động
+    if (vehicle.getDistanceToVehicleAhead() < vehicle.getDynamicSafeDistance()) {
+        vehicle.setState(std::make_unique<Braking>());
+        return;
+    }
+
+    // kiểm tra đèn (chỉ xe đầu hàng)
+    if (vehicle.getVehicleAhead() == nullptr) {
+        if (vehicle.getTrafficLight() == Vehicle::redLight || vehicle.getTrafficLight() == Vehicle::yellowLight) {
+            vehicle.setState(std::make_unique<Braking>());
+            return;
+        }
+    }
+
+    // tính toán vận tốc mới
     double newSpeed = vehicle.getSpeed() + vehicle.getAcceleration() * dt;
-    newSpeed = std::min(newSpeed, vehicle.getMaxSpeed());
-
-    vehicle.setSpeed(newSpeed);
-    if(vehicle.getSpeed() >= std::min(vehicle.getTargetSpeed(), vehicle.getMaxSpeed())) {
+    double speedLimit = std::min(vehicle.getTargetSpeed(), vehicle.getMaxSpeed());
+    
+    if (newSpeed >= speedLimit) {
+        newSpeed = speedLimit;
+        vehicle.setSpeed(newSpeed);
         vehicle.setState(std::make_unique<Cruising>());
+    } else {
+        vehicle.setSpeed(newSpeed);
     }
-
-        vehicle.setPosition(vehicle.getPosition() + newSpeed * dt);
+    
+    // cập nhật vị trí và chặn vị trí không vượt qua xe trước
+    vehicle.setPosition(vehicle.getPosition() + newSpeed * dt);
+    
+    if (vehicle.getVehicleAhead() != nullptr) {
+        double maxAllowedPos = vehicle.getVehicleAhead()->getPosition() - vehicle.getSafeDistance();
+        if (vehicle.getPosition() > maxAllowedPos) {
+            vehicle.setPosition(maxAllowedPos);
+        }
     }
+}
 
 const char* Accelerating::getName() const { return "Accelerating";}

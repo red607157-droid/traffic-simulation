@@ -9,7 +9,11 @@
 #include <algorithm>
 
 void Stopped::accelerate(Vehicle& vehicle){
-    vehicle.setState(std::make_unique<Accelerating>());
+    if (vehicle.getDistanceToVehicleAhead() >= vehicle.getSafeDistance()) {
+        vehicle.setState(std::make_unique<Accelerating>());
+    } else {
+        std::cout << "Chua du khoang cach an toan, tiep tuc cho!\n";
+    }
 }
 
 void Stopped::brake(Vehicle& vehicle){
