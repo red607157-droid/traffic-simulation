@@ -18,6 +18,7 @@ public:
 
     void update(double dt);   // same public signature as Phase 3
     std::string getStateName() const;
+    LightColor getColor() const;
     double getTimeRemaining() const;
     void display() const;
 };

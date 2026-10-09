@@ -4,20 +4,14 @@
 #include "Vehicle/Vehicle.h"
 
 class Car : public Vehicle {
-private:
-    double fuel;
-
 public:
     Car(int _i, double _s, double _f);
-
-    double getFuel() const;
-    void setFuel(double _f);
 
     void display() const override;
     double getMaxSpeed() const override;
     double getAcceleration() const override;
     double getDeceleration() const override;
+    double getFuelPerMeter() const override;
 };
 
 #endif
-

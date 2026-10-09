@@ -1,12 +1,10 @@
 #include "Integration/LightMapper.h"
-#include "Vehicle/Vehicle.h"
-#include<string>
 
-
-Vehicle::trafficLight LightMapper(const TrafficLight &tfl){
-    std::string state = tfl.getStateName();
-    if(state == "RED")           {return Vehicle::redLight;}
-    else if(state == "GREEN")    { return Vehicle::greenLight;}
-    else if(state == "YELLOW")   { return Vehicle::yellowLight;}
-    else                         { return Vehicle::unknownLight;}
+Vehicle::trafficLight LightMapper(const TrafficLight& tfl) {
+    switch (tfl.getColor()) {
+        case LightColor::Red:    return Vehicle::redLight;
+        case LightColor::Green:  return Vehicle::greenLight;
+        case LightColor::Yellow: return Vehicle::yellowLight;
+    }
+    return Vehicle::unknownLight;   // an toàn: coi như đèn đỏ (xem Vehicle::getLightLimit)
 }

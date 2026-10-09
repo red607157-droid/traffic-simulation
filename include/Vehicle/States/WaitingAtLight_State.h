@@ -1,7 +1,7 @@
 #ifndef WAITING_AT_LIGHT_STATE_H
 #define WAITING_AT_LIGHT_STATE_H
 
-#include <Vehicle/States/Vehicle_State.h>
+#include "Vehicle/States/Vehicle_State.h"
 
 class WaitingAtLight: public VehicleState{
     public:

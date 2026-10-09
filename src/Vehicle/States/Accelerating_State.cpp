@@ -1,66 +1,44 @@
+#include <algorithm>
 #include <iostream>
 #include <memory>
-#include "Vehicle/States/Accelerating_State.h"
 #include "Vehicle/Vehicle.h"
-#include "Vehicle/States/Cruising_State.h"
+#include "Vehicle/States/Accelerating_State.h"
 #include "Vehicle/States/Braking_State.h"
-#include "Vehicle/States/Stopped_State.h"
-#include "Vehicle/States/WaitingAtLight_State.h"
-#include <algorithm>
+#include "Vehicle/States/Cruising_State.h"
+
+// Quy ước chung cho mọi state: dùng v.getDesiredSpeed(dt) (đã gộp target, maxSpeed, xe trước, đèn)
+// để quyết định tăng / giữ / giảm tốc. Các điều kiện chuyển state loại trừ nhau nên không bị lặp vô hạn.
 
 void Accelerating::accelerate(Vehicle& vehicle) {
-    double speedLimit = std::min(vehicle.getTargetSpeed(), vehicle.getMaxSpeed());
-    
-    if (vehicle.getSpeed() >= speedLimit) {
+    if (vehicle.getSpeed() >= vehicle.getDesiredSpeed(0.0) - Vehicle::SPEED_EPS) {
         std::cout << "Da dat toc do muc tieu hoac toi da!\n";
         vehicle.setState(std::make_unique<Cruising>());
     }
 }
 
-void Accelerating::brake(Vehicle& vehicle){
+void Accelerating::brake(Vehicle& vehicle) {
+    vehicle.setTargetSpeed(0.0);
     vehicle.setState(std::make_unique<Braking>());
 }
 
-void Accelerating::stop(Vehicle& vehicle) {
-    vehicle.setState(std::make_unique<Braking>());
-}
+void Accelerating::stop(Vehicle& vehicle) { brake(vehicle); }
 
 void Accelerating::update(Vehicle& vehicle, double dt) {
-   // rà quét biến cố bằng khoảng cách động
-    if (vehicle.getDistanceToVehicleAhead() < vehicle.getDynamicSafeDistance()) {
-        vehicle.setState(std::make_unique<Braking>());
+    double s = vehicle.getSpeed();
+    double D = vehicle.getDesiredSpeed(dt);
+
+    if (s > D + Vehicle::SPEED_EPS) {                       // đang nhanh hơn mức cho phép -> phanh
+        vehicle.transitionTo(std::make_unique<Braking>(), dt);
+        return;
+    }
+    if (D <= Vehicle::SPEED_EPS && s <= Vehicle::SPEED_EPS) {     // không được phép đi -> đứng chờ
+        vehicle.enterHaltState(dt, true);
         return;
     }
 
-    // kiểm tra đèn (chỉ xe đầu hàng)
-    if (vehicle.getVehicleAhead() == nullptr) {
-        if (vehicle.getTrafficLight() == Vehicle::redLight || vehicle.getTrafficLight() == Vehicle::yellowLight) {
-            vehicle.setState(std::make_unique<Braking>());
-            return;
-        }
-    }
-
-    // tính toán vận tốc mới
-    double newSpeed = vehicle.getSpeed() + vehicle.getAcceleration() * dt;
-    double speedLimit = std::min(vehicle.getTargetSpeed(), vehicle.getMaxSpeed());
-    
-    if (newSpeed >= speedLimit) {
-        newSpeed = speedLimit;
-        vehicle.setSpeed(newSpeed);
-        vehicle.setState(std::make_unique<Cruising>());
-    } else {
-        vehicle.setSpeed(newSpeed);
-    }
-    
-    // cập nhật vị trí và chặn vị trí không vượt qua xe trước
-    vehicle.setPosition(vehicle.getPosition() + newSpeed * dt);
-    
-    if (vehicle.getVehicleAhead() != nullptr) {
-        double maxAllowedPos = vehicle.getVehicleAhead()->getPosition() - vehicle.getSafeDistance();
-        if (vehicle.getPosition() > maxAllowedPos) {
-            vehicle.setPosition(maxAllowedPos);
-        }
-    }
+    double ns = std::min(s + vehicle.getAcceleration() * dt, D);
+    vehicle.advance(ns, dt);
+    if (ns >= D - Vehicle::SPEED_EPS) vehicle.setState(std::make_unique<Cruising>());   // đã di chuyển rồi, đổi state là xong
 }
 
-const char* Accelerating::getName() const { return "Accelerating";}
+const char* Accelerating::getName() const { return "Accelerating"; }
