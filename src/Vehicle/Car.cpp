@@ -1,25 +1,16 @@
-#include "Car.h"
+#include "Vehicle/Car.h"
 #include <iostream>
-using namespace std;
 
-double Car::getMaxSpeed() const {
-    return 120;
-}
+// Khoảng cách an toàn cơ bản cho ô tô là 10m
+Car::Car(int _i, double _s, double _f) : Vehicle(_i, _s, _f, 10.0) {}
+
+// Thông số vật lý của Car
+double Car::getMaxSpeed() const { return 25.0; }      // Tối đa 25 m/s (khoảng 90 km/h)
+double Car::getAcceleration() const { return 3.0; }   // Gia tốc: 3 m/s^2
+double Car::getDeceleration() const { return 5.0; }   // Phanh: 5 m/s^2
+double Car::getFuelPerMeter() const { return 0.08; }  // 0.08 đơn vị nhiên liệu / mét
 
 void Car::display() const {
-    cout << "Car no." << getId() << "\n"
-         << "Current speed: " << getSpeed() << "\n"
-         << "Fuel: " << getFuel() << "\n"
-         << "Max speed: " << getMaxSpeed() << "\n";
-}
-
-void Car::move(double dt) {
-    if (dt < 0) { return; }
-    double fuelConsumed = 0.4 * dt;
-    setFuel(getFuel() - fuelConsumed);
-    if (getFuel() < 0) { cout << "Het xang roi cuh\n"; return; }
-    setSpeed(5 * dt + getSpeed());
-    if (getSpeed() > getMaxSpeed()) {
-        setSpeed(getMaxSpeed());
-    }
+    std::cout << "Car no." << getId() << "\n";
+    displayCommon();
 }

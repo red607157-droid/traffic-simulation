@@ -1,15 +1,29 @@
-CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude
-SRC = $(wildcard src/*.cpp)
-TARGET = traffic-sim
+CXX      = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude -MMD -MP
+SRC      = $(shell find src -name '*.cpp') main.cpp
+OBJ      = $(SRC:%.cpp=build/%.o)
+TARGET   = traffic-sim
 
-$(TARGET): $(SRC)
-	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET)
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+	$(CXX) $(CXXFLAGS) $(OBJ) -o $@
+
+build/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Chạy test: make test  (biên dịch toàn bộ src/ + tests/test_vehicle.cpp, không cần main.cpp)
+test:
+	$(CXX) -std=c++17 -Wall -Wextra -Iinclude -fsanitize=address,undefined $(shell find src -name '*.cpp') tests/test_vehicle.cpp -o test-vehicle
+	./test-vehicle
 
 run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -f $(TARGET)
+	rm -rf build $(TARGET) test-vehicle test-vehicle.d
 
-.PHONY: run clean
+-include $(OBJ:.o=.d)
+
+.PHONY: all run clean test

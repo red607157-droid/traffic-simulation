@@ -1,25 +1,23 @@
 #ifndef BUS_H
 #define BUS_H
 
-#include "Vehicle.h"
+#include "Vehicle/Vehicle.h"
 
 class Bus : public Vehicle {
 private:
-    double fuel;
-    int passenger;
+    int capacity;   // sức chứa (số hành khách)
 
 public:
-    Bus(int _i, double _s, double _f, int _p)
-        : Vehicle(_i, _s), fuel(_f), passenger(_p) {}
+    Bus(int _i, double _s, double _f, int _c);
 
-    void setPassenger(int _p) { passenger = _p; }
-    void setFuel(double _f) { fuel = _f; }
-    double getFuel() const { return fuel; }
-    int getPassenger() const { return passenger; }
+    int getCapacity() const;
+    void setCapacity(int _c);
 
-    void move(double dt) override;
     void display() const override;
     double getMaxSpeed() const override;
+    double getAcceleration() const override;
+    double getDeceleration() const override;
+    double getFuelPerMeter() const override;
 };
 
 #endif

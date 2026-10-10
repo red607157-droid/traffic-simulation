@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <string>
-#include "TrafficLightState.h"
+#include "Traffic/TrafficLightState.h"
 
 // Phase 4: the old switch-based transition() is gone. TrafficLight
 // is now just a "context" object (State Pattern terminology) that
@@ -18,6 +18,7 @@ public:
 
     void update(double dt);   // same public signature as Phase 3
     std::string getStateName() const;
+    LightColor getColor() const;
     double getTimeRemaining() const;
     void display() const;
 };

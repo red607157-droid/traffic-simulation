@@ -4,6 +4,9 @@
 #include <memory>
 #include <string>
 
+// Màu đèn: dùng enum thay vì so sánh chuỗi để bên ngoài (vd. LightMapper) không bị hỏng khi đổi tên hiển thị.
+enum class LightColor { Red, Green, Yellow };
+
 // Shared durations so any state can build the next one without
 // TrafficLight having to know which duration belongs to which color.
 struct TrafficLightConfig {
@@ -32,6 +35,7 @@ public:
 
     // State-specific behavior, delegated to each subclass.
     virtual std::string getName() const = 0;
+    virtual LightColor getColor() const = 0;
     virtual std::unique_ptr<TrafficLightState> nextState() const = 0;
 };
 

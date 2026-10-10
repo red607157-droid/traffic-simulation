@@ -1,14 +1,20 @@
+# build output
 *.o
 *.obj
+*.d
 *.exe
 *.out
 build/
 bin/
 obj/
+traffic-sim
+test-vehicle
 
+# IDE
 .vscode/
 .vs/
 .idea/
 
+# OS
 Thumbs.db
 .DS_Store
