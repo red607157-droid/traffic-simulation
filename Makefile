@@ -13,16 +13,18 @@ build/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Chạy test: make test  (biên dịch toàn bộ src/ + tests/test_vehicle.cpp, không cần main.cpp)
+# Chạy test: make test  (biên dịch toàn bộ src/ + từng file trong tests/, không cần main.cpp)
 test:
 	$(CXX) -std=c++17 -Wall -Wextra -Iinclude -fsanitize=address,undefined $(shell find src -name '*.cpp') tests/test_vehicle.cpp -o test-vehicle
 	./test-vehicle
+	$(CXX) -std=c++17 -Wall -Wextra -Iinclude -fsanitize=address,undefined $(shell find src -name '*.cpp') tests/test_simulation.cpp -o test-simulation
+	./test-simulation
 
 run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -rf build $(TARGET) test-vehicle test-vehicle.d
+	rm -rf build $(TARGET) test-vehicle test-vehicle.d test-simulation test-simulation.d
 
 -include $(OBJ:.o=.d)
 

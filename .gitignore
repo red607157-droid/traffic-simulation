@@ -9,6 +9,7 @@ bin/
 obj/
 traffic-sim
 test-vehicle
+test-simulation
 
 # IDE
 .vscode/
