@@ -2,6 +2,7 @@
 #define SIMULATION_H
 
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <thread>
 #include <vector>
@@ -44,12 +45,13 @@ private:
 
     void doStep();                                // 1 bước (GĐ 1 + GĐ 2), dùng chung cho mọi cách chạy
     void updateRoads();                           // GĐ 1
-    void realTimeLoop(int maxSteps, double speed);   // maxSteps < 0: chạy tới khi stop()
+    std::chrono::steady_clock::duration tickFor(double speed) const;   // độ dài 1 tick thật; speed sai ném invalid_argument
+    void realTimeLoop(int maxSteps, std::chrono::steady_clock::duration tick);   // maxSteps < 0: chạy tới khi stop()
     void printSummary() const;
     void requireStopped() const;                  // ném logic_error nếu đang chạy nền
 
 public:
-    // maxWorkers = 0: lấy theo số nhân CPU. dt <= 0 ném invalid_argument.
+    // maxWorkers = 0: lấy theo số nhân CPU. dt <= 0 hoặc không hữu hạn (inf, NaN) ném invalid_argument.
     Simulation(double _dt, unsigned _maxWorkers = 0);
     ~Simulation();   // tự gọi stop(): không bao giờ huỷ std::thread khi chưa join (sẽ bị std::terminate)
 
@@ -58,9 +60,12 @@ public:
 
     void step();                                              // chạy 1 bước, không in gì
     void run(int steps);                                      // in chi tiết sau mỗi bước; steps < 0 ném invalid_argument
-    void runRealTime(double simSeconds, double speed = 1.0);  // Phase 10; simSeconds < 0 hoặc speed <= 0 ném invalid_argument
+    // Phase 10: chạy đúng simSeconds / dt bước, nên simSeconds phải là bội số của dt (vd. dt = 1 thì 2.5 bị từ chối).
+    // Ném invalid_argument nếu: simSeconds < 0, không hữu hạn, không phải bội số của dt, hoặc quá lớn (số bước > INT_MAX);
+    // speed <= 0, không hữu hạn, quá lớn (1 tick thật bị làm tròn về 0) hoặc quá nhỏ (1 tick thật > 1 giờ).
+    void runRealTime(double simSeconds, double speed = 1.0);
 
-    void start(double speed = 1.0);   // Phase 12: chạy nền; đang chạy rồi -> logic_error; speed <= 0 -> invalid_argument
+    void start(double speed = 1.0);   // Phase 12: chạy nền; đang chạy rồi -> logic_error; speed sai (như runRealTime) -> invalid_argument
     void stop();                      // báo dừng rồi join thread nền; gọi nhiều lần không sao
     bool isRunning() const;
 

@@ -2,13 +2,19 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 using namespace std;
 
+namespace {
+const double MAX_TICK_SECONDS = 3600.0;   // 1 tick thật dài hơn 1 giờ coi như speed sai (và tránh tràn số khi đổi sang steady_clock)
+}
+
 Simulation::Simulation(double _dt, unsigned _maxWorkers)
     : dt(_dt), time(0.0), stepCount(0), maxWorkers(_maxWorkers), running(false) {
-    if (!(_dt > 0)) throw invalid_argument("Simulation: dt phai > 0");
+    if (!isfinite(_dt) || _dt <= 0) throw invalid_argument("Simulation: dt phai la so huu han > 0");
     if (maxWorkers == 0) maxWorkers = thread::hardware_concurrency();   // có thể trả về 0 nếu không biết
     if (maxWorkers == 0) maxWorkers = 2;
 }
@@ -74,9 +80,19 @@ void Simulation::run(int steps) {
 }
 
 // ---------- thời gian thực (Phase 10) ----------
-void Simulation::realTimeLoop(int maxSteps, double speed) {
+chrono::steady_clock::duration Simulation::tickFor(double speed) const {
+    // isfinite: chặn cả vô cực (inf) và NaN, không chỉ số âm.
+    if (!isfinite(speed) || speed <= 0) throw invalid_argument("Simulation: speed phai la so huu han > 0");
     // Độ dài 1 tick theo thời gian THẬT. steady_clock: đồng hồ không bị chỉnh lùi/tiến như giờ hệ thống.
-    auto tick = chrono::duration_cast<chrono::steady_clock::duration>(chrono::duration<double>(dt / speed));
+    double tickSeconds = dt / speed;
+    if (tickSeconds > MAX_TICK_SECONDS) throw invalid_argument("Simulation: speed qua nho (1 tick dai hon 1 gio)");
+    auto tick = chrono::duration_cast<chrono::steady_clock::duration>(chrono::duration<double>(tickSeconds));
+    if (tick <= chrono::steady_clock::duration::zero())   // speed quá lớn: tick bị làm tròn về 0 -> vòng lặp không chờ nữa
+        throw invalid_argument("Simulation: speed qua lon (1 tick ngan hon do chia cua dong ho)");
+    return tick;
+}
+
+void Simulation::realTimeLoop(int maxSteps, chrono::steady_clock::duration tick) {
     printSummary();
     auto nextTick = chrono::steady_clock::now();
     int done = 0;
@@ -94,21 +110,27 @@ void Simulation::realTimeLoop(int maxSteps, double speed) {
 
 void Simulation::runRealTime(double simSeconds, double speed) {
     requireStopped();
-    if (!(simSeconds >= 0)) throw invalid_argument("Simulation: simSeconds phai >= 0");
-    if (!(speed > 0)) throw invalid_argument("Simulation: speed phai > 0");
-    int steps = static_cast<int>(simSeconds / dt + 1e-9);   // 1e-9: tránh sai số số thực
+    if (!isfinite(simSeconds) || simSeconds < 0) throw invalid_argument("Simulation: simSeconds phai la so huu han >= 0");
+    // Chỉ chạy số bước TRỌN VẸN, nên simSeconds phải là bội số của dt.
+    // Vd. dt = 1 thì runRealTime(2.5) bị từ chối, thay vì lặng lẽ chỉ chạy 2 bước.
+    double exactSteps = simSeconds / dt;
+    double wholeSteps = round(exactSteps);
+    if (fabs(exactSteps - wholeSteps) > 1e-9 * max(1.0, wholeSteps))   // 1e-9: bỏ qua sai số số thực (vd. 0.3 / 0.1)
+        throw invalid_argument("Simulation: simSeconds phai la boi so cua dt");
+    if (wholeSteps > numeric_limits<int>::max()) throw invalid_argument("Simulation: simSeconds qua lon");
+    auto tick = tickFor(speed);
     cout << "Real-time simulation started (dt=" << dt << "s, x" << speed << ")\n";
-    realTimeLoop(steps, speed);
+    realTimeLoop(static_cast<int>(wholeSteps), tick);
     cout << "Real-time simulation finished (t=" << time.load() << "s)\n";
 }
 
 // ---------- chạy nền (Phase 12) ----------
 void Simulation::start(double speed) {
-    if (!(speed > 0)) throw invalid_argument("Simulation: speed phai > 0");
+    auto tick = tickFor(speed);   // kiểm tra speed TRƯỚC khi tạo thread: exception trong thread nền sẽ làm dừng chương trình
     if (running.load()) throw logic_error("Simulation: dang chay roi");
     running.store(true);   // đặt TRƯỚC khi tạo thread, nếu không thread có thể thấy false và thoát ngay
     try {
-        worker = thread([this, speed] { realTimeLoop(-1, speed); });
+        worker = thread([this, tick] { realTimeLoop(-1, tick); });
     } catch (...) {
         running.store(false);
         throw;
