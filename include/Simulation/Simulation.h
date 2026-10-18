@@ -33,14 +33,16 @@ private:
     std::vector<std::unique_ptr<RoadComponent>> components;
 
 public:
-    Simulation(double _dt);   // dt <= 0 ném invalid_argument
+    Simulation(double _dt);   // dt <= 0 hoặc không hữu hạn (inf, NaN) ném invalid_argument
 
     void addComponent(std::unique_ptr<RoadComponent> c);   // thêm vào CUỐI thứ tự update; nullptr ném invalid_argument
 
     void step();               // chạy 1 bước, không in gì
     void run(int steps);       // in trạng thái hiện tại, rồi chạy TIẾP `steps` bước và in sau mỗi bước; steps < 0 ném invalid_argument
     // Phase 10: chạy TIẾP `simSeconds` giây mô phỏng theo thời gian thật, mỗi bước in 1 dòng tóm tắt.
-    // simSeconds < 0 hoặc speed <= 0 ném invalid_argument.
+    // Chạy đúng simSeconds / dt bước, nên simSeconds phải là bội số của dt (vd. dt = 1 thì 2.5 bị từ chối).
+    // Ném invalid_argument nếu: simSeconds < 0, không hữu hạn, không phải bội số của dt, hoặc quá lớn (số bước > INT_MAX);
+    // speed <= 0, không hữu hạn, quá lớn (1 tick thật bị làm tròn về 0) hoặc quá nhỏ (1 tick thật > 1 giờ).
     void runRealTime(double simSeconds, double speed = 1.0);
     void display() const;      // in thời gian và từng thành phần (chi tiết)
     void displaySummary() const;   // in 1 dòng: thời gian + số xe của từng thành phần
