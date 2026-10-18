@@ -1,3 +1,4 @@
+#include <iostream>
 #include <memory>
 
 #include "Simulation/Simulation.h"
@@ -31,10 +32,15 @@ int main() {
     auto inter = make_unique<Intersection>(1, "I1");
     inter->addApproach(laneA, laneB, 12, 10, 3);
 
-    Simulation sim(1.0);   // 1 bước = 1 giây mô phỏng
-    sim.addComponent(move(roadA));   // Road trước, Intersection sau (xem Simulation.h)
-    sim.addComponent(move(roadB));
-    sim.addComponent(move(inter));
-    sim.runRealTime(36, 10.0);   // 36 giây mô phỏng, nhanh gấp 10 lần -> khoảng 3,6 giây thật
+    Simulation sim(1.0);   // 1 bước = 1 giây mô phỏng; số thread cho xe = theo số nhân CPU
+    sim.addRoad(move(roadA));          // Simulation tự update Road trước, Intersection sau
+    sim.addRoad(move(roadB));
+    sim.addIntersection(move(inter));
+
+    cout << "Nhan Enter de dung mo phong...\n";   // in TRƯỚC start(): sau đó chỉ thread nền in
+    sim.start(2.0);   // chạy thời gian thực trên 1 thread nền, nhanh gấp 2 lần
+    cin.get();        // main chờ người dùng
+    sim.stop();       // báo dừng (atomic<bool>) rồi join thread nền
+    cout << "Da dung o t=" << sim.getTime() << "s\n";
     return 0;
 }
