@@ -12,6 +12,7 @@ test-vehicle
 test-simulation
 concurrency-basics
 concurrency-tsan
+simulation-demo
 
 # IDE
 .vscode/

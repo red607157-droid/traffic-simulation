@@ -38,12 +38,17 @@ concurrency-tsan:
 	$(CXX) -std=c++17 -g -pthread -fsanitize=thread experiments/concurrency_basics.cpp -o concurrency-tsan
 	./concurrency-tsan
 
+# Demo riêng của Simulation (không dùng main.cpp)
+demo:
+	$(CXX) -std=c++17 -Wall -Wextra -pthread -Iinclude $(shell find src -name '*.cpp') demo/simulation_demo.cpp -o simulation-demo
+	./simulation-demo
+
 run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -rf build $(TARGET) test-vehicle test-vehicle.d test-simulation test-simulation.d test-infrastructure test-infrastructure.d concurrency-basics concurrency-tsan
+	rm -rf build $(TARGET) test-vehicle test-vehicle.d test-simulation test-simulation.d test-infrastructure test-infrastructure.d concurrency-basics concurrency-tsan simulation-demo
 
 -include $(OBJ:.o=.d)
 
-.PHONY: all run clean test test-vehicle test-simulation test-infrastructure concurrency concurrency-tsan
+.PHONY: all run clean test test-vehicle test-simulation test-infrastructure concurrency concurrency-tsan demo
