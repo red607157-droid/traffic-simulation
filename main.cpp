@@ -1,46 +1,59 @@
+#include <iomanip>
 #include <iostream>
 #include <memory>
+#include <vector>
 
-#include "Simulation/Simulation.h"
-#include "Infrastructure/Road.h"
-#include "Infrastructure/Intersection.h"
 #include "Vehicle/Car.h"
 #include "Vehicle/Bus.h"
 #include "Vehicle/Motorbike.h"
+#include "Traffic/TrafficLight.h"
+#include "Infrastructure/Lane.h"
+#include "Integration/LightMapper.h"
 
 using namespace std;
 
 int main() {
-    // Kịch bản: Road A (500m) -> nút giao có đèn -> Road B (500m)
-    auto roadA = make_unique<Road>(1, "A", 500.0);
-    auto roadB = make_unique<Road>(2, "B", 500.0);
-    Lane* laneA = roadA->addLane(1);
-    Lane* laneB = roadB->addLane(2);
+    // id=1, ten "lane-1", dai 500m (vach dung o 500, xem Lane.h), khong gioi han toc do rieng.
+    Lane lane(1, "lane-1", 500.0);
 
-    // Đặt targetSpeed TRƯỚC khi move() giao xe cho Lane.
+    // addVehicle giao xe cho Lane theo thu tu bat ky; Lane tu refreshOrder() de
+    // xac dinh xe nao la DAU hang (vi tri lon nhat) va noi vehicleAhead cho tung xe.
+    const double startPos[]    = {400, 370, 350};
+    const double targetSpeed[] = {20, 15, 18};
+
     auto car  = make_unique<Car>(1, 0, 100);
     auto bus  = make_unique<Bus>(2, 0, 200, 30);
     auto bike = make_unique<Motorbike>(3, 0, 125, 30);
-    car->setTargetSpeed(20);
-    bus->setTargetSpeed(15);
-    bike->setTargetSpeed(18);
-    laneA->addVehicle(move(car),  400);
-    laneA->addVehicle(move(bus),  370);
-    laneA->addVehicle(move(bike), 350);
 
-    // Đèn ở cuối làn A: RED=12s, GREEN=10s, YELLOW=3s; qua đèn thì xe sang làn B.
-    auto inter = make_unique<Intersection>(1, "I1");
-    inter->addApproach(laneA, laneB, 12, 10, 3);
+    // Dat targetSpeed TRUOC khi move() giao quyen so huu cho Lane.
+    car->setTargetSpeed(targetSpeed[0]);
+    bus->setTargetSpeed(targetSpeed[1]);
+    bike->setTargetSpeed(targetSpeed[2]);
 
-    Simulation sim(1.0);   // 1 bước = 1 giây mô phỏng; số thread cho xe = theo số nhân CPU
-    sim.addRoad(move(roadA));          // Simulation tự update Road trước, Intersection sau
-    sim.addRoad(move(roadB));
-    sim.addIntersection(move(inter));
+    lane.addVehicle(move(car),  startPos[0]);
+    lane.addVehicle(move(bus),  startPos[1]);
+    lane.addVehicle(move(bike), startPos[2]);
 
-    cout << "Nhan Enter de dung mo phong...\n";   // in TRƯỚC start(): sau đó chỉ thread nền in
-    sim.start(2.0);   // chạy thời gian thực trên 1 thread nền, nhanh gấp 2 lần
-    cin.get();        // main chờ người dùng
-    sim.stop();       // báo dừng (atomic<bool>) rồi join thread nền
-    cout << "Da dung o t=" << sim.getTime() << "s\n";
+    // id=1, RED=12s, GREEN=10s, YELLOW=3s
+    TrafficLight light(1, 12, 10, 3);
+    lane.setTrafficLight(&light);   // thay cho goi LightMapper() + setTrafficLight() tay moi step
+
+    const double dt = 1;
+    const int steps = 36;
+    cout << fixed << setprecision(2);
+    for (int step = 0; step < steps; step++) {
+        cout << "=========== Step " << step << " ===========\n";
+        light.display();
+
+        lane.update(dt);   // Lane tu goi v->update(dt) cho tung xe, dung thu tu DAU->CUOI
+
+        for (size_t i = 0; i < static_cast<size_t>(lane.getVehicleCount()); i++) {
+            Vehicle* v = lane.getVehicleAt(i);
+            cout << "  #" << v->getId() << " " << setw(14) << left << v->getState()->getName() << right
+                 << " pos=" << setw(7) << v->getPosition()
+                 << " speed=" << setw(6) << v->getSpeed() << "\n";
+        }
+        light.update(dt);
+    }
     return 0;
 }
