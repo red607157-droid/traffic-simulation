@@ -22,7 +22,7 @@ void Simulation::step() {
 void Simulation::run(int steps) {
     if (steps < 0) throw invalid_argument("Simulation: so buoc phai >= 0");
     cout << "Simulation started (dt=" << dt << "s, steps=" << steps << ")\n";
-    display();                       // trạng thái ban đầu (Step 0)
+    display();                       // trạng thái hiện tại (lần đầu gọi run() là Step 0)
     for (int i = 0; i < steps; i++) {
         step();
         display();                   // trạng thái sau mỗi bước
