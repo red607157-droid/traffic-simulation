@@ -13,6 +13,7 @@ test-simulation
 concurrency-basics
 concurrency-tsan
 test-simulation-tsan
+simulation-demo
 
 # IDE
 .vscode/
