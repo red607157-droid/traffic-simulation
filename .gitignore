@@ -10,6 +10,7 @@ obj/
 traffic-sim
 test-vehicle
 test-simulation
+concurrency-basics
 
 # IDE
 .vscode/

@@ -20,12 +20,17 @@ test:
 	$(CXX) -std=c++17 -Wall -Wextra -Iinclude -fsanitize=address,undefined $(shell find src -name '*.cpp') tests/test_simulation.cpp -o test-simulation
 	./test-simulation
 
+# Phase 11: thí nghiệm đa luồng độc lập (không dùng code simulator)
+concurrency:
+	$(CXX) -std=c++17 -Wall -Wextra -pthread experiments/concurrency_basics.cpp -o concurrency-basics
+	./concurrency-basics
+
 run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -rf build $(TARGET) test-vehicle test-vehicle.d test-simulation test-simulation.d
+	rm -rf build $(TARGET) test-vehicle test-vehicle.d test-simulation test-simulation.d concurrency-basics
 
 -include $(OBJ:.o=.d)
 
-.PHONY: all run clean test
+.PHONY: all run clean test concurrency
