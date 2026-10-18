@@ -37,7 +37,8 @@ int main(){
   assert(c.getPosition()-d.getPosition()>=d.getSafeDistance()-1e-6);
   // 6. Khong co den: xe chay qua vach (mac dinh den xanh)
   Simulation n(1); Vehicle& e=n.addVehicle(make_unique<Car>(1,0,100)); e.setPosition(450); e.setTargetSpeed(20);
-  for(int i=0;i<10;i++) n.step(); assert(e.getPosition()>500);
+  for(int i=0;i<10;i++) n.step();
+  assert(e.getPosition()>500);
   // 7. run() voi so buoc am bi tu choi
   thrown=false; try{ n.run(-1); }catch(const invalid_argument&){ thrown=true; } assert(thrown);
   cout<<"Tat ca test simulation dat\n";
