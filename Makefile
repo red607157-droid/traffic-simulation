@@ -33,12 +33,17 @@ concurrency:
 	$(CXX) -std=c++17 -Wall -Wextra -pthread experiments/concurrency_basics.cpp -o concurrency-basics
 	./concurrency-basics
 
+# Phase 11 + ThreadSanitizer: báo chính xác dòng có data race (phần 2). Chỉ chạy được trên Linux/Mac, không có trên MinGW.
+concurrency-tsan:
+	$(CXX) -std=c++17 -g -pthread -fsanitize=thread experiments/concurrency_basics.cpp -o concurrency-tsan
+	./concurrency-tsan
+
 run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -rf build $(TARGET) test-vehicle test-vehicle.d test-simulation test-simulation.d test-infrastructure test-infrastructure.d concurrency-basics
+	rm -rf build $(TARGET) test-vehicle test-vehicle.d test-simulation test-simulation.d test-infrastructure test-infrastructure.d concurrency-basics concurrency-tsan
 
 -include $(OBJ:.o=.d)
 
-.PHONY: all run clean test test-vehicle test-simulation test-infrastructure concurrency
+.PHONY: all run clean test test-vehicle test-simulation test-infrastructure concurrency concurrency-tsan

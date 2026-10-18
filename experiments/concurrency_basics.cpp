@@ -2,7 +2,10 @@
 // Giả sử có 2 làn đường, mỗi làn chạy trên 1 thread và đếm số xe đi qua giao lộ.
 //
 // Build: g++ -std=c++17 -Wall -Wextra -pthread experiments/concurrency_basics.cpp -o concurrency-basics
-// (không bật -O2: compiler sẽ gộp vòng lặp lại và race condition ở phần 2 không lộ ra nữa)
+//
+// Lưu ý phần 2: 2 thread cùng ghi 1 biến int không khoá là DATA RACE = undefined behavior trong C++.
+// Kết quả KHÔNG đoán trước được: thường nhỏ hơn 2000000 nhưng không đảm bảo (có lần vẫn ra đúng).
+// Muốn chắc chắn phát hiện race thì dùng ThreadSanitizer: make concurrency-tsan (chỉ có trên Linux/Mac).
 
 #include <atomic>
 #include <iostream>
@@ -23,7 +26,7 @@ void countLane2() { for (int i = 0; i < CARS; i++) lane2Count++; }
 int unsafeTotal = 0;
 
 void countUnsafe() {
-    for (int i = 0; i < CARS; i++) unsafeTotal++;   // đọc -> cộng 1 -> ghi: 2 thread có thể chen nhau
+    for (int i = 0; i < CARS; i++) unsafeTotal++;   // đọc -> cộng 1 -> ghi: 2 thread có thể chen nhau -> data race
 }
 
 // ---------- Phần 3: có khoá bằng mutex ----------
@@ -57,20 +60,22 @@ int main() {
     thread d(countUnsafe);
     c.join();
     d.join();
-    cout << "  tong = " << unsafeTotal << " (dung ra phai la " << 2 * CARS << ") -> race condition\n";
+    cout << "  tong = " << unsafeTotal << " (dung ra phai la " << 2 * CARS << ", ket qua khong doan truoc duoc)\n";
 
     cout << "Phan 3: chung 1 bien, co mutex\n";
     thread e(countWithMutex);
     thread f(countWithMutex);
     e.join();
     f.join();
-    cout << "  tong = " << safeTotal << "\n";
+    cout << "  tong = " << safeTotal << " (dung ra phai la " << 2 * CARS << ") -> "
+         << (safeTotal == 2 * CARS ? "DUNG" : "SAI") << "\n";
 
     cout << "Phan 4: chung 1 bien, dung atomic\n";
     thread g(countWithAtomic);
     thread h(countWithAtomic);
     g.join();
     h.join();
-    cout << "  tong = " << atomicTotal << "\n";
+    cout << "  tong = " << atomicTotal << " (dung ra phai la " << 2 * CARS << ") -> "
+         << (atomicTotal == 2 * CARS ? "DUNG" : "SAI") << "\n";
     return 0;
 }
