@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <cassert>
+#include <chrono>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -117,6 +118,24 @@ int main(){
     assert(fabs(c->getPosition()-423.679232)<1e-5 && near(c->getSpeed(),20));
     assert(fabs(b->getPosition()-314.425896)<1e-5 && near(b->getSpeed(),15));
     assert(fabs(m->getPosition()-309.425896)<1e-5 && near(m->getSpeed(),15));
+  }
+  // 11. Phase 10 - runRealTime: tham so sai bi tu choi
+  {
+    Simulation t(1);
+    thrown=false; try{ t.runRealTime(-1); }catch(const invalid_argument&){ thrown=true; } assert(thrown);
+    thrown=false; try{ t.runRealTime(5, 0); }catch(const invalid_argument&){ thrown=true; } assert(thrown);
+    thrown=false; try{ t.runRealTime(5, -2); }catch(const invalid_argument&){ thrown=true; } assert(thrown);
+  }
+  // 12. Phase 10 - runRealTime: thoi gian MO PHONG dung, thoi gian THAT xap xi simSeconds / speed, va chay TIEP
+  {
+    Simulation t(0.5);
+    auto start=chrono::steady_clock::now();
+    t.runRealTime(5, 50);   // 5s mo phong, x50 -> ~0.1s that, 10 buoc
+    double real=chrono::duration<double>(chrono::steady_clock::now()-start).count();
+    assert(t.getStepCount()==10 && near(t.getTime(),5));
+    assert(real>=0.09 && real<2.0);   // khong chay nhanh hon thoi gian that; tren 2s la treo
+    t.runRealTime(2, 50);
+    assert(t.getStepCount()==14 && near(t.getTime(),7));
   }
   cout<<"Tat ca test simulation dat\n";
 }

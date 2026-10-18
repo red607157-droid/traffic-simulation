@@ -35,6 +35,6 @@ int main() {
     sim.addComponent(move(roadA));   // Road trước, Intersection sau (xem Simulation.h)
     sim.addComponent(move(roadB));
     sim.addComponent(move(inter));
-    sim.run(36);
+    sim.runRealTime(36, 10.0);   // 36 giây mô phỏng, nhanh gấp 10 lần -> khoảng 3,6 giây thật
     return 0;
 }
