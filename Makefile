@@ -1,5 +1,5 @@
 CXX      = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude -MMD -MP
+CXXFLAGS = -std=c++17 -Wall -Wextra -pthread -Iinclude -MMD -MP
 SRC      = $(shell find src -name '*.cpp') main.cpp
 OBJ      = $(SRC:%.cpp=build/%.o)
 TARGET   = traffic-sim
@@ -17,15 +17,15 @@ build/%.o: %.cpp
 test: test-vehicle test-simulation test-infrastructure
 
 test-vehicle:
-	$(CXX) -std=c++17 -Wall -Wextra -Iinclude -fsanitize=address,undefined $(shell find src -name '*.cpp') tests/test_vehicle.cpp -o test-vehicle
+	$(CXX) -std=c++17 -Wall -Wextra -pthread -Iinclude -fsanitize=address,undefined $(shell find src -name '*.cpp') tests/test_vehicle.cpp -o test-vehicle
 	./test-vehicle
 
 test-simulation:
-	$(CXX) -std=c++17 -Wall -Wextra -Iinclude -fsanitize=address,undefined $(shell find src -name '*.cpp') tests/test_simulation.cpp -o test-simulation
+	$(CXX) -std=c++17 -Wall -Wextra -pthread -Iinclude -fsanitize=address,undefined $(shell find src -name '*.cpp') tests/test_simulation.cpp -o test-simulation
 	./test-simulation
 
 test-infrastructure:
-	$(CXX) -std=c++17 -Wall -Wextra -Iinclude -fsanitize=address,undefined $(shell find src -name '*.cpp') tests/test_infrastructure.cpp -o test-infrastructure
+	$(CXX) -std=c++17 -Wall -Wextra -pthread -Iinclude -fsanitize=address,undefined $(shell find src -name '*.cpp') tests/test_infrastructure.cpp -o test-infrastructure
 	./test-infrastructure
 
 # Phase 11: thí nghiệm đa luồng độc lập (không dùng code simulator)
@@ -38,6 +38,11 @@ concurrency-tsan:
 	$(CXX) -std=c++17 -g -pthread -fsanitize=thread experiments/concurrency_basics.cpp -o concurrency-tsan
 	./concurrency-tsan
 
+# Phase 12-13: chạy test simulation (có đa luồng) dưới ThreadSanitizer. Chỉ Linux/Mac. Xem docs/concurrency.md
+test-simulation-tsan:
+	$(CXX) -std=c++17 -g -pthread -Iinclude -fsanitize=thread $(shell find src -name '*.cpp') tests/test_simulation.cpp -o test-simulation-tsan
+	./test-simulation-tsan
+
 # Demo riêng của Simulation (không dùng main.cpp)
 demo:
 	$(CXX) -std=c++17 -Wall -Wextra -pthread -Iinclude $(shell find src -name '*.cpp') demo/simulation_demo.cpp -o simulation-demo
@@ -47,8 +52,8 @@ run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -rf build $(TARGET) test-vehicle test-vehicle.d test-simulation test-simulation.d test-infrastructure test-infrastructure.d concurrency-basics concurrency-tsan simulation-demo
+	rm -rf build $(TARGET) test-vehicle test-vehicle.d test-simulation test-simulation.d test-infrastructure test-infrastructure.d concurrency-basics concurrency-tsan test-simulation-tsan simulation-demo
 
 -include $(OBJ:.o=.d)
 
-.PHONY: all run clean test test-vehicle test-simulation test-infrastructure concurrency concurrency-tsan demo
+.PHONY: all run clean test test-vehicle test-simulation test-infrastructure concurrency concurrency-tsan test-simulation-tsan demo

@@ -1,13 +1,17 @@
 // Demo RIÊNG cho lớp Simulation (main.cpp là demo chung của nhóm, không dùng Simulation).
 //   Phase 2 : run()          - vòng lặp mô phỏng nằm trong Simulation, không nằm trong main()
 //   Phase 10: runRealTime()  - tự chạy theo thời gian thật, không cần gọi từng bước
+//   Phase 12: start()/stop() - mô phỏng chạy trên thread nền (các Road update song song),
+//                              main làm việc khác cùng lúc rồi dừng thread gọn gàng
 //
 // Build (PowerShell):
 //   g++ -std=c++17 -Wall -Wextra -pthread -Iinclude (Get-ChildItem src -Recurse -Filter *.cpp).FullName demo/simulation_demo.cpp -o simulation-demo.exe; ./simulation-demo.exe
 // Build (Git Bash / Linux / Mac): make demo
 
+#include <chrono>
 #include <iostream>
 #include <memory>
+#include <thread>
 
 #include "Simulation/Simulation.h"
 #include "Infrastructure/Road.h"
@@ -40,15 +44,22 @@ int main() {
     auto inter = make_unique<Intersection>(1, "I1");
     inter->addApproach(laneA, laneB, 12, 10, 3);
 
-    Simulation sim(1.0);   // 1 bước = 1 giây mô phỏng
-    sim.addComponent(move(roadA));   // Road trước, Intersection sau (xem Simulation.h)
-    sim.addComponent(move(roadB));
-    sim.addComponent(move(inter));
+    Simulation sim(1.0);   // 1 bước = 1 giây mô phỏng; số thread cho xe = theo số nhân CPU
+    sim.addRoad(move(roadA));          // Simulation tự update Road trước, Intersection sau
+    sim.addRoad(move(roadB));
+    sim.addIntersection(move(inter));
 
     cout << "\n##### Phase 2: run() #####\n";
     sim.run(3);   // in chi tiết từng bước (dài), nên chỉ chạy vài bước
 
     cout << "\n##### Phase 10: runRealTime() #####\n";
     sim.runRealTime(30, 10.0);   // chạy TIẾP 30 giây mô phỏng, nhanh gấp 10 lần -> khoảng 3 giây thật
+
+    cout << "\n##### Phase 12: start() / stop() #####\n";
+    cout << "So thread cho xe moi buoc: " << sim.getWorkerCount() << " (mot thread / Road, khong phai mot thread / xe)\n";
+    sim.start(10.0);   // từ đây chỉ thread nền in ra; main KHÔNG in trong lúc đang chạy
+    this_thread::sleep_for(chrono::seconds(2));   // main làm "việc khác" trong 2 giây
+    sim.stop();        // báo dừng (atomic<bool>) rồi join thread nền
+    cout << "Main da dung thread nen o t=" << sim.getTime() << "s, buoc " << sim.getStepCount() << "\n";
     return 0;
 }
