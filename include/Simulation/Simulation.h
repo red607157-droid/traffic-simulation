@@ -19,7 +19,12 @@
 //   Nếu thêm Intersection trước thì xe vẫn chạy đúng nhưng được chuyển sang làn ra CHẬM HƠN 1 bước
 //   (xem test "thu tu" trong tests/test_simulation.cpp). Simulation không tự sắp xếp lại.
 //
-// Gọi run() nhiều lần: mô phỏng CHẠY TIẾP từ trạng thái hiện tại (time, stepCount cộng dồn), KHÔNG reset.
+// Gọi run() / runRealTime() nhiều lần: mô phỏng CHẠY TIẾP từ trạng thái hiện tại (time, stepCount cộng dồn), KHÔNG reset.
+//
+// Phase 10 - thời gian MÔ PHỎNG và thời gian THẬT là hai thứ khác nhau:
+//   - time      : tăng đúng dt mỗi bước, bất kể máy nhanh hay chậm.
+//   - speed     : 1 giây mô phỏng ứng với (1 / speed) giây thật. speed = 10 -> nhanh gấp 10 lần.
+//   runRealTime() chỉ gọi step() và chờ tới thời điểm của tick kế tiếp, không tự update xe / đèn.
 class Simulation {
 private:
     double dt;          // độ dài một bước (giây mô phỏng), > 0
@@ -28,13 +33,19 @@ private:
     std::vector<std::unique_ptr<RoadComponent>> components;
 
 public:
-    Simulation(double _dt);   // dt <= 0 ném invalid_argument
+    Simulation(double _dt);   // dt <= 0 hoặc không hữu hạn (inf, NaN) ném invalid_argument
 
     void addComponent(std::unique_ptr<RoadComponent> c);   // thêm vào CUỐI thứ tự update; nullptr ném invalid_argument
 
     void step();               // chạy 1 bước, không in gì
     void run(int steps);       // in trạng thái hiện tại, rồi chạy TIẾP `steps` bước và in sau mỗi bước; steps < 0 ném invalid_argument
-    void display() const;      // in thời gian và từng thành phần
+    // Phase 10: chạy TIẾP `simSeconds` giây mô phỏng theo thời gian thật, mỗi bước in 1 dòng tóm tắt.
+    // Chạy đúng simSeconds / dt bước, nên simSeconds phải là bội số của dt (vd. dt = 1 thì 2.5 bị từ chối).
+    // Ném invalid_argument nếu: simSeconds < 0, không hữu hạn, không phải bội số của dt, hoặc quá lớn (số bước > INT_MAX);
+    // speed <= 0, không hữu hạn, quá lớn (1 tick thật bị làm tròn về 0) hoặc quá nhỏ (1 tick thật > 1 giờ).
+    void runRealTime(double simSeconds, double speed = 1.0);
+    void display() const;      // in thời gian và từng thành phần (chi tiết)
+    void displaySummary() const;   // in 1 dòng: thời gian + số xe của từng thành phần
 
     double getTime() const;
     int getStepCount() const;

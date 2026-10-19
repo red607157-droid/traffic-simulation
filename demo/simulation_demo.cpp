@@ -1,5 +1,6 @@
 // Demo RIÊNG cho lớp Simulation (main.cpp là demo chung của nhóm, không dùng Simulation).
-//   Phase 2 : run()  - vòng lặp mô phỏng nằm trong Simulation, không nằm trong main()
+//   Phase 2 : run()          - vòng lặp mô phỏng nằm trong Simulation, không nằm trong main()
+//   Phase 10: runRealTime()  - tự chạy theo thời gian thật, không cần gọi từng bước
 //
 // Build (PowerShell):
 //   g++ -std=c++17 -Wall -Wextra -pthread -Iinclude (Get-ChildItem src -Recurse -Filter *.cpp).FullName demo/simulation_demo.cpp -o simulation-demo.exe; ./simulation-demo.exe
@@ -46,5 +47,8 @@ int main() {
 
     cout << "\n##### Phase 2: run() #####\n";
     sim.run(3);   // in chi tiết từng bước (dài), nên chỉ chạy vài bước
+
+    cout << "\n##### Phase 10: runRealTime() #####\n";
+    sim.runRealTime(30, 10.0);   // chạy TIẾP 30 giây mô phỏng, nhanh gấp 10 lần -> khoảng 3 giây thật
     return 0;
 }
