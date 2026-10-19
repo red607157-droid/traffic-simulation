@@ -19,6 +19,13 @@ using namespace std;
 
 bool near(double a, double b){ return fabs(a-b)<1e-6; }
 
+// Road "hong": update() luon nem exception -> dung de thu cach Simulation xu ly loi trong cac thread.
+class ThrowingRoad : public Road {
+public:
+  ThrowingRoad(int _id) : Road(_id, "Hong", 100.0) {}
+  void update(double) override { throw runtime_error("loi trong Road::update"); }
+};
+
 // Kich ban nhieu Road de thu da luong: 4 Road; A -> B qua nut giao I1, C -> D qua nut giao I2.
 // cars: con tro (KHONG so huu) toi tung xe de so sanh ket qua.
 void buildCity(Simulation& sim, vector<Vehicle*>& cars){
@@ -217,7 +224,10 @@ int main(){
     thrown=false; try{ bg.start(0); }catch(const invalid_argument&){ thrown=true; } assert(thrown && !bg.isRunning());
     // speed sai bi tu choi TRUOC khi tao thread nen (khong de exception xay ra trong thread)
     thrown=false; try{ bg.start(numeric_limits<double>::infinity()); }catch(const invalid_argument&){ thrown=true; } assert(thrown && !bg.isRunning());
-    thrown=false; try{ bg.start(1e300); }catch(const invalid_argument&){ thrown=true; } assert(thrown && !bg.isRunning());
+    thrown=false; try{ bg.start(1e300); }catch(const invalid_argument&){ thrown=true; } assert(thrown && !bg.isRunning());   // tick lam tron ve 0
+    thrown=false; try{ bg.start(numeric_limits<double>::quiet_NaN()); }catch(const invalid_argument&){ thrown=true; } assert(thrown && !bg.isRunning());
+    thrown=false; try{ bg.start(1e-300); }catch(const invalid_argument&){ thrown=true; } assert(thrown && !bg.isRunning());  // tick > 1 gio
+    assert(bg.getStepCount()==0);   // khong co thread nen nao da chay buoc nao
     bg.start(1000);   // 1 buoc = 1ms that
     assert(bg.isRunning());
     thrown=false; try{ bg.start(1000); }catch(const logic_error&){ thrown=true; } assert(thrown);
@@ -245,6 +255,46 @@ int main(){
     Simulation d(1,2); buildCity(d,cars);
     d.start(1000);
     this_thread::sleep_for(chrono::milliseconds(10));
+  }
+  // 17. Exception trong thread cua GD 1 khong lam chuong trinh dung (std::terminate): step() nem lai o thread chinh
+  for(unsigned workers : {1u, 4u}){
+    Simulation s2(1, workers);
+    s2.addRoad(make_unique<Road>(1,"A",100.0));
+    s2.addRoad(make_unique<ThrowingRoad>(2));
+    s2.addRoad(make_unique<Road>(3,"C",100.0));
+    thrown=false; try{ s2.step(); }catch(const runtime_error&){ thrown=true; } assert(thrown);
+    assert(s2.getStepCount()==0);   // buoc loi khong duoc tinh
+  }
+  // 18. Exception trong thread NEN: thread tu dung, start() bi chan toi khi goi stop(), stop() nem lai loi do
+  {
+    Simulation s3(1,2);
+    s3.addRoad(make_unique<Road>(1,"A",100.0));
+    s3.addRoad(make_unique<ThrowingRoad>(2));
+    s3.start(1000);
+    for(int i=0; i<2000 && s3.isRunning(); i++) this_thread::sleep_for(chrono::milliseconds(1));
+    assert(!s3.isRunning());                                   // tu dung vi loi
+    thrown=false; try{ s3.start(1000); }catch(const logic_error&){ thrown=true; } assert(thrown);   // phai lay loi truoc
+    thrown=false; try{ s3.stop(); }catch(const runtime_error&){ thrown=true; } assert(thrown);      // loi duoc nem lai
+    s3.stop();                                                 // goi lai: khong con loi
+  }
+  // 19. stop() dung NGAY, khong cho het tick: speed=0.001 -> 1 tick = 1000 giay that
+  {
+    vector<Vehicle*> cars;
+    Simulation s4(1,2); buildCity(s4,cars);
+    s4.start(0.001);
+    this_thread::sleep_for(chrono::milliseconds(20));
+    auto t0=chrono::steady_clock::now();
+    s4.stop();
+    double waited=chrono::duration<double>(chrono::steady_clock::now()-t0).count();
+    assert(waited<1.0);                 // truoc day phai cho toi 1000 giay
+    assert(s4.getStepCount()==0);       // chua toi tick dau tien
+  }
+  // 20. Huy Simulation khi thread nen da dung vi loi ma chua stop(): destructor khong nem exception
+  {
+    Simulation s5(1,2);
+    s5.addRoad(make_unique<ThrowingRoad>(1));
+    s5.start(1000);
+    this_thread::sleep_for(chrono::milliseconds(30));
   }
   cout<<"Tat ca test simulation dat\n";
 }

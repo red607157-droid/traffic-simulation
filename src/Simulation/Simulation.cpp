@@ -16,10 +16,11 @@ Simulation::Simulation(double _dt, unsigned _maxWorkers)
     : dt(_dt), time(0.0), stepCount(0), maxWorkers(_maxWorkers), running(false) {
     if (!isfinite(_dt) || _dt <= 0) throw invalid_argument("Simulation: dt phai la so huu han > 0");
     if (maxWorkers == 0) maxWorkers = thread::hardware_concurrency();   // có thể trả về 0 nếu không biết
-    if (maxWorkers == 0) maxWorkers = 2;
+    if (maxWorkers == 0) maxWorkers = 1;                                // không biết số nhân -> chạy an toàn trên 1 thread
 }
 
-Simulation::~Simulation() { stop(); }
+// Destructor không được ném exception -> bỏ qua lỗi của thread nền (nếu có).
+Simulation::~Simulation() { shutdownWorker(); }
 
 void Simulation::requireStopped() const {
     if (running.load()) throw logic_error("Simulation: dang chay nen, hay goi stop() truoc");
@@ -46,13 +47,27 @@ void Simulation::updateRoads() {
     }
     // Thread w update các Road w, w+n, w+2n, ... -> mỗi Road thuộc đúng 1 thread, không thread nào ghi chung.
     // Tạo thread mới mỗi bước: đơn giản, tốn thêm chút thời gian nhưng số thread luôn <= maxWorkers.
+    // Exception thoát ra khỏi một std::thread sẽ gọi std::terminate -> mỗi thread tự bắt lỗi của mình,
+    // ghi vào ô errors[w] của RIÊNG nó (không thread nào ghi chung), rồi ném lại sau khi join.
     vector<thread> threads;
-    for (unsigned w = 0; w < n; w++) {
-        threads.emplace_back([this, w, n] {
-            for (size_t i = w; i < roads.size(); i += n) roads[i]->update(dt);
-        });
+    vector<exception_ptr> errors(n);
+    try {
+        for (unsigned w = 0; w < n; w++) {
+            threads.emplace_back([this, w, n, &errors] {
+                try {
+                    for (size_t i = w; i < roads.size(); i += n) roads[i]->update(dt);
+                } catch (...) {
+                    errors[w] = current_exception();
+                }
+            });
+        }
+    } catch (...) {                                 // tạo thread thất bại giữa chừng: join các thread đã chạy rồi mới ném tiếp
+        for (auto& t : threads) t.join();
+        throw;
     }
     for (auto& t : threads) t.join();              // GĐ 2 chỉ bắt đầu khi mọi Road đã xong
+    for (auto& e : errors)
+        if (e) rethrow_exception(e);               // ném lại lỗi đầu tiên ở thread gọi step()
 }
 
 void Simulation::doStep() {
@@ -100,8 +115,14 @@ void Simulation::realTimeLoop(int maxSteps, chrono::steady_clock::duration tick)
         // Chờ TỚI một thời điểm cố định (sleep_until), không chờ MỘT KHOẢNG (sleep_for):
         // nếu bước trước chạy lâu thì lần chờ sau ngắn lại -> thời gian không bị trôi dần.
         nextTick += tick;
-        this_thread::sleep_until(nextTick);
-        if (maxSteps < 0 && !running.load()) break;   // stop() được gọi trong lúc đang chờ
+        if (maxSteps < 0) {
+            // Chạy nền: chờ trên condition_variable thay vì sleep_until, để stop() đánh thức được NGAY
+            // (với speed nhỏ, 1 tick có thể dài tới 1 giờ). wait_until trả về true nếu bị đánh thức vì stop().
+            unique_lock<mutex> lock(stopMutex);
+            if (stopCv.wait_until(lock, nextTick, [this] { return !running.load(); })) break;
+        } else {
+            this_thread::sleep_until(nextTick);
+        }
         doStep();
         printSummary();
         done++;
@@ -126,20 +147,41 @@ void Simulation::runRealTime(double simSeconds, double speed) {
 
 // ---------- chạy nền (Phase 12) ----------
 void Simulation::start(double speed) {
-    auto tick = tickFor(speed);   // kiểm tra speed TRƯỚC khi tạo thread: exception trong thread nền sẽ làm dừng chương trình
+    auto tick = tickFor(speed);   // kiểm tra speed TRƯỚC khi tạo thread
     if (running.load()) throw logic_error("Simulation: dang chay roi");
+    if (worker.joinable())        // thread nền đã tự dừng vì lỗi nhưng chưa ai gọi stop() để lấy lỗi đó
+        throw logic_error("Simulation: thread nen da dung vi loi, hay goi stop() truoc");
     running.store(true);   // đặt TRƯỚC khi tạo thread, nếu không thread có thể thấy false và thoát ngay
     try {
-        worker = thread([this, tick] { realTimeLoop(-1, tick); });
+        worker = thread([this, tick] {
+            try {
+                realTimeLoop(-1, tick);
+            } catch (...) {
+                workerError = current_exception();   // giữ lại để stop() ném ở thread chính
+                running.store(false);                // tự dừng; ghi SAU workerError
+            }
+        });
     } catch (...) {
         running.store(false);
         throw;
     }
 }
 
+exception_ptr Simulation::shutdownWorker() {
+    {
+        lock_guard<mutex> lock(stopMutex);   // đổi cờ trong lúc giữ khoá -> thread nền không thể lỡ lần notify bên dưới
+        running.store(false);
+    }
+    stopCv.notify_all();                     // đánh thức thread nền đang chờ tick -> nó thoát ngay
+    if (worker.joinable()) worker.join();
+    exception_ptr err = workerError;         // đọc SAU join: thread nền đã ghi xong
+    workerError = nullptr;
+    return err;
+}
+
 void Simulation::stop() {
-    running.store(false);
-    if (worker.joinable()) worker.join();   // đợi thread nền chạy xong bước hiện tại rồi thoát
+    exception_ptr err = shutdownWorker();
+    if (err) rethrow_exception(err);
 }
 
 bool Simulation::isRunning() const { return running.load(); }
