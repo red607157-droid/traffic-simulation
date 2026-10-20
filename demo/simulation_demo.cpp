@@ -1,3 +1,4 @@
+// Thu thuc hanh GitHub
 // Demo RIÊNG cho lớp Simulation (main.cpp là demo chung của nhóm, không dùng Simulation).
 //   Phase 2 : run()          - vòng lặp mô phỏng nằm trong Simulation, không nằm trong main()
 //   Phase 10: runRealTime()  - tự chạy theo thời gian thật, không cần gọi từng bước
