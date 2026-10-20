@@ -31,3 +31,9 @@
 - Xoá code không dùng: `getDynamicSafeDistance`, `getDistanceToVehicleAhead`.
 - Thêm `tests/test_vehicle.cpp` + `make test`. Chuẩn hoá line ending về LF.
 - Giữ nguyên: `std::cout` trong các state (chỉ là thông báo lệnh), `Lane` tạm của Duy.
+
+# Đợt hoàn thiện cuối (Phase 15-16)
+- Thêm `tests/test_trafficlight.cpp` + `make test-trafficlight` (20 nhóm test: đổi màu, ranh giới, thời gian dư, từng state, `LightMapper`, `Lane` đọc đèn).
+- Sửa lỗi treo: `TrafficLight::update(inf)` và `Intersection::addApproach(..., phaseOffset = inf)` chạy vô hạn vì thời gian dư không bao giờ hết. Nay `update` bỏ qua `dt` không hữu hạn và `addApproach` ném `invalid_argument`. Lưu ý còn lại: `dt` hữu hạn nhưng cực lớn (khoảng 1e15 trở lên) vẫn chạy rất lâu; nếu cần chặn hẳn, có thể lấy `fmod(dt, tổng chu kỳ)` trước vòng `while`.
+- Bỏ file nhị phân `test-infrastructure` đã bị commit nhầm khỏi git; thêm `test-infrastructure` và `test-trafficlight` vào `.gitignore`.
+- Tài liệu: `README.md`, `docs/architecture.md`, `docs/state-pattern.md`, `docs/composite-pattern.md`; điền kết quả ThreadSanitizer vào `docs/concurrency.md`.

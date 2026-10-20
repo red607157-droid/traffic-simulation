@@ -1,3 +1,4 @@
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 #include "Infrastructure/Intersection.h"
@@ -13,7 +14,7 @@ TrafficLight* Intersection::addApproach(Lane* incoming, Lane* outgoing,
                                         double redDur, double greenDur, double yellowDur,
                                         double phaseOffset) {
     if (incoming == nullptr || incoming == outgoing || incoming->hasTrafficLight()) return nullptr;
-    if (!(phaseOffset >= 0.0)) throw invalid_argument("Intersection: phaseOffset phai >= 0");
+    if (!(phaseOffset >= 0.0) || !isfinite(phaseOffset)) throw invalid_argument("Intersection: phaseOffset phai la so huu han >= 0");
 
     // Tạo đèn trước (có thể ném exception nếu thời lượng sai) khi chưa thay đổi gì.
     auto light = make_unique<TrafficLight>(incoming->getId(), redDur, greenDur, yellowDur);

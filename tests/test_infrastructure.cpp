@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include <cmath>
+#include <limits>
 #include "Vehicle/Car.h"
 #include "Infrastructure/Road.h"
 #include "Infrastructure/Lane.h"
@@ -171,6 +172,12 @@ int main() {
         try { inter.addApproach(in1, out1, 5, 5, 2, -1.0); }              // phaseOffset < 0
         catch (const invalid_argument&) { threw = true; }
         assert(threw);
+
+        threw = false;
+        try { inter.addApproach(in1, out1, 5, 5, 2, numeric_limits<double>::infinity()); }   // phaseOffset vo cuc (truoc day treo)
+        catch (const invalid_argument&) { threw = true; }
+        assert(threw);
+        assert(!in1->hasTrafficLight());
 
         TrafficLight* light = inter.addApproach(in1, out1, 10, 5, 2);
         assert(light != nullptr);

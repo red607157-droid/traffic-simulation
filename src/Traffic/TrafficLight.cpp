@@ -1,5 +1,6 @@
 #include "Traffic/TrafficLight.h"
 #include "Traffic/RedState.h"
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 using namespace std;
@@ -13,7 +14,8 @@ TrafficLight::TrafficLight(int _id, double redDur, double greenDur, double yello
 }
 
 void TrafficLight::update(double dt) {
-    if (!(dt > 0)) return;
+    // dt <= 0, NaN hoac vo cuc: bo qua. (dt = inf se khien vong while ben duoi chay mai mai vi qua thoi gian du khong bao gio het.)
+    if (!(dt > 0) || !isfinite(dt)) return;
     state->update(dt);
     // while (không phải if): dt lớn có thể đi qua nhiều state; thời gian dư được chuyển sang state kế tiếp
     while (state->isFinished()) {
