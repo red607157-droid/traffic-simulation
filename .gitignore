@@ -9,6 +9,8 @@ bin/
 obj/
 traffic-sim
 test-vehicle
+test-trafficlight
+test-infrastructure
 test-simulation
 concurrency-basics
 concurrency-tsan

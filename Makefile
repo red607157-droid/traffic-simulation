@@ -14,11 +14,15 @@ build/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Chạy test: make test  (biên dịch toàn bộ src/ + tests/*.cpp, không cần main.cpp)
-test: test-vehicle test-simulation test-infrastructure
+test: test-vehicle test-trafficlight test-simulation test-infrastructure
 
 test-vehicle:
 	$(CXX) -std=c++17 -Wall -Wextra -pthread -Iinclude -fsanitize=address,undefined $(shell find src -name '*.cpp') tests/test_vehicle.cpp -o test-vehicle
 	./test-vehicle
+
+test-trafficlight:
+	$(CXX) -std=c++17 -Wall -Wextra -pthread -Iinclude -fsanitize=address,undefined $(shell find src -name '*.cpp') tests/test_trafficlight.cpp -o test-trafficlight
+	./test-trafficlight
 
 test-simulation:
 	$(CXX) -std=c++17 -Wall -Wextra -pthread -Iinclude -fsanitize=address,undefined $(shell find src -name '*.cpp') tests/test_simulation.cpp -o test-simulation
@@ -52,8 +56,8 @@ run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -rf build $(TARGET) test-vehicle test-vehicle.d test-simulation test-simulation.d test-infrastructure test-infrastructure.d concurrency-basics concurrency-tsan test-simulation-tsan simulation-demo
+	rm -rf build $(TARGET) test-vehicle test-vehicle.d test-trafficlight test-trafficlight.d test-simulation test-simulation.d test-infrastructure test-infrastructure.d concurrency-basics concurrency-tsan test-simulation-tsan simulation-demo
 
 -include $(OBJ:.o=.d)
 
-.PHONY: all run clean test test-vehicle test-simulation test-infrastructure concurrency concurrency-tsan test-simulation-tsan demo
+.PHONY: all run clean test test-vehicle test-trafficlight test-simulation test-infrastructure concurrency concurrency-tsan test-simulation-tsan demo
