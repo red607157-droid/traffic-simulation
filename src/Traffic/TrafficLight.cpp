@@ -7,8 +7,10 @@ using namespace std;
 
 TrafficLight::TrafficLight(int _id, double redDur, double greenDur, double yellowDur)
     : id(_id) {
-    if (!(redDur > 0 && greenDur > 0 && yellowDur > 0))
-        throw invalid_argument("TrafficLight: moi thoi gian den phai > 0");
+    if (!isfinite(redDur) || !isfinite(greenDur) || !isfinite(yellowDur) ||
+    redDur <= 0 || greenDur <= 0 || yellowDur <= 0)
+    throw invalid_argument(
+        "TrafficLight: moi thoi gian den phai la so huu han > 0");
     TrafficLightConfig config{redDur, greenDur, yellowDur};
     state = make_unique<RedState>(config); // every light starts on RED
 }

@@ -42,6 +42,9 @@ int main() {
     assert(ctorThrows(-1, 5, 2) && ctorThrows(5, -1, 2) && ctorThrows(5, 5, -1));
     assert(ctorThrows(NaN, 5, 2) && ctorThrows(5, NaN, 2) && ctorThrows(5, 5, NaN));
     assert(!ctorThrows(5, 5, 2));
+    assert(ctorThrows(INF, 5, 2) &&
+       ctorThrows(5, INF, 2) &&
+       ctorThrows(5, 5, INF));
 
     // 2. Luon bat dau bang DO, voi du thoi luong do
     {
